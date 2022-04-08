@@ -1,0 +1,87 @@
+version: '3'
+
+services:
+  php:
+    build: docker/php
+    working_dir: /srv/app
+    volumes:
+      # Comment out the next line in production
+      - .:/srv/app
+      # PHP conf
+      - ./docker/php/usr/local/etc/php-fpm.conf:/usr/local/etc/php-fpm.conf:ro
+      - ./docker/php/usr/local/etc/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+      - ./docker/php/usr/local/etc/php/php.ini:/usr/local/etc/php/php.ini:ro
+      - ./docker/php/usr/local/etc/php/conf.d/php-optimized-for-symfony.ini:/usr/local/etc/php/conf.d/php-optimized-for-symfony.ini:ro # A garder ??
+      - ./docker/php/usr/local/etc/php/conf.d/xdebug-phpstorm.ini:/usr/local/etc/php/conf.d/xdebug-phpstorm.ini:ro
+    environment:
+      - COMPOSER_MEMORY_LIMIT=-1
+    ports:
+      - "8082:9001"
+    restart: on-failure
+    user: 1000:1000
+    networks:
+      fil-ariane-server-v1:
+        ipv4_address: 10.1.2.2
+  
+  nginx:
+    build: docker/nginx
+    volumes:
+      - .:/srv/app
+      - ./docker/nginx/conf.d/dev.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+    ports:
+      - "81:80"
+    restart: always
+    networks:
+      fil-ariane-server-v1:
+        ipv4_address: 10.1.2.4
+        aliases:
+          - fil-ariane-server.local
+  
+  mysql:
+    container_name: fil-ariane-server-v1-mysql
+    build: docker/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: application-entreprise
+      MYSQL_TCP_PORT: 3306
+    restart: always
+    working_dir: /dump
+    command: --sql-mode="" --character-set-server=utf8 --collation-server=utf8_unicode_ci --innodb-buffer-pool-size=3072M --innodb-flush-log-at-trx-commit=1 --innodb-log-buffer-size=16M --innodb-thread-concurrency=8 --max-allowed-packet=64M --max-heap-table-size=128M --myisam-sort-buffer-size=128M --query-cache-limit=4M --query-cache-size=256M --table-open-cache=1024 --thread-cache-size=20 --tmp-table-size=128M --max_allowed_packet=536870912
+    volumes:
+      - databases:/var/lib/mysql
+      - ./docker/mysql/dump:/dump
+    ports:
+      - "3308:3306"
+    extra_hosts:
+      fil-ariane-server-v1.local: 10.1.2.4
+    networks:
+      fil-ariane-server-v1:
+        ipv4_address: 10.1.2.3
+  
+  phpmyadmin:
+    container_name: fil-ariane-server-v1-pma
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - PMA_HOST=mysql
+    depends_on:
+      - mysql
+    restart: always
+    ports:
+      - "8084:80"
+    networks:
+      fil-ariane-server-v1:
+        ipv4_address: 10.1.2.5
+
+volumes:
+  databases:
+  esdata:
+    driver: local
+
+networks:
+  fil-ariane-server-v1:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.1.2.0/24

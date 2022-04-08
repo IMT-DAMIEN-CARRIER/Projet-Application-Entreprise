@@ -1,0 +1,9 @@
+api_platform:
+    title: 'Application entreprise'
+    description: 'Bienvenue sur API Platform pour le TP : application entreprise.'
+    mapping:
+        paths: ['%kernel.project_dir%/src/Entity']
+    patch_formats:
+        json: ['application/merge-patch+json']
+    swagger:
+        versions: [3]

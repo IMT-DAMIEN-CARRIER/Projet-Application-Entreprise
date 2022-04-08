@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Application d'entreprise{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="jumbotron mt-3">
+            <h1 class="display-3">Bienvenue sur ce projet</h1>
+        </div>
+
+        <div class="row">
+            <div class="breadcrumb flat">
+                {% if elementFormations is not empty %}
+                    {% for elementFormation in elementFormations %}
+                        <a href="{{ path('get_element_formation_by_id', { 'id': elementFormation.id }) }}" class="active">
+                            {{ elementFormation.title }}
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    <p class="alert-danger">Il n'y a pas d'élément de formation, vous avez peut être une erreur dans votre base de données.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="alert-info">
+                {% if sons is not empty %}
+                    {% for son in sons %}
+                        <div>
+                            <a href="{{ path('get_element_formation_by_id', { 'id': son.id }) }}" class="btn">
+                                {{ son.title }}
+                            </a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="alert-info">Pas de fils pour cet élément de formation.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+{% endblock %}
